@@ -1,8 +1,8 @@
 __pycache__
-data
-output
-data_vis
-models
-src
-run_*
-condor
+/data
+/output
+/data_vis
+/models
+/src
+/run_*
+/condor
