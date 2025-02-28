@@ -3,7 +3,7 @@ cnt: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNM
 source_type: 'CTC' #choices=['liveCell', 'CTC', 'cellIm']
 cnt_zoom: 2.0 #zoom for the content images
 masks_path: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2024/Fluo-C3DL-MDA231_slice9/01_ST/SEG/' #masks for the content images
-sty: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2024/BF-C2DL-MuSC/01/'
+sty: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2024/BF-C2DL-MuSC_backRemoved/01/'
 # sty_zoom: 0 #zoom for the style images
 ddim_inv_steps: 50
 save_feat_steps: 50
@@ -20,7 +20,8 @@ model_config: 'models/ldm/stable-diffusion-v1/v1-inference.yaml'
 precomputed: ''
 ckpt: 'models/ldm/stable-diffusion-v1/sd-v1-4.ckpt'
 precision: 'autocast'
-output_path: '/work/scratch/yilmaz/transferred_styles/CTC_fluo_c3dl_zoom2_CTC_BFMuSC/'
+output_path: '/work/scratch/yilmaz/transferred_styles/CTC_fluo_c3dl_zoom2_CTC_BFMuSC_backRemoved/'
 without_init_adain: false
 without_attn_injection: false
 fromMask: false
+rgb: false

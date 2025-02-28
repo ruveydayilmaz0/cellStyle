@@ -5,11 +5,16 @@ import numpy as np
 from matplotlib import pyplot as plt
 from skimage import io
 from shapely.geometry import Polygon
+from pathlib import Path
 
 # %matplotlib inline
 
-coco = COCO('/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/train_huh7.json')
-
+coco = COCO(
+    "/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/train_skbr3.json"
+)
+save_path = "/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_skbr3/"
+Path(save_path + "instance/").mkdir(exist_ok=True, parents=True)
+Path(save_path + "semantic/").mkdir(exist_ok=True, parents=True)
 # for img_id in coco.imgs:
 #     img = coco.imgs[img_id]
 #     cat_ids = coco.getCatIds()
@@ -24,39 +29,48 @@ coco = COCO('/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/liv
 #     mask[mask>0] = 255
 #     io.imsave("/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_a172/semantic/mask_"+coco.imgs[img_id]['file_name'], mask)
 
+
 def calculate_area(segmentation):
     """Calculate the area of a polygon from segmentation."""
     if isinstance(segmentation, list):  # Polygon format
-        poly = Polygon([(segmentation[0][i], segmentation[0][i + 1]) for i in range(0, len(segmentation[0]), 2)])
+        poly = Polygon(
+            [
+                (segmentation[0][i], segmentation[0][i + 1])
+                for i in range(0, len(segmentation[0]), 2)
+            ]
+        )
         return poly.area
     return 0
+
 
 # Loop through images
 for img_id in coco.imgs:
     img = coco.imgs[img_id]
     cat_ids = coco.getCatIds()
-    anns_ids = coco.getAnnIds(imgIds=img['id'], catIds=cat_ids, iscrowd=None)
+    anns_ids = coco.getAnnIds(imgIds=img["id"], catIds=cat_ids, iscrowd=None)
     anns = coco.loadAnns(anns_ids)
 
     # Calculate areas for all annotations
     for ann in anns:
-        ann['area'] = calculate_area(ann['segmentation'])
+        ann["area"] = calculate_area(ann["segmentation"])
 
     # Sort annotations by area (ascending or descending)
-    anns = sorted(anns, key=lambda x: x['area'], reverse=True)  # Smaller areas will overwrite larger ones
+    anns = sorted(
+        anns, key=lambda x: x["area"], reverse=True
+    )  # Smaller areas will overwrite larger ones
 
     # Create an empty mask for the instance segmentation map
-    mask = np.zeros((img['height'], img['width']), dtype=np.uint16)
+    mask = np.zeros((img["height"], img["width"]), dtype=np.uint16)
 
     # Add annotations to the mask
     for i, ann in enumerate(anns, start=1):  # Start indexing at 1
         ann_mask = coco.annToMask(ann)
         mask[ann_mask > 0] = i  # Assign the annotation index to the mask
-    
-    io.imsave("/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_huh7/instance/mask_"+coco.imgs[img_id]['file_name'], mask)
+
+    io.imsave(save_path + "instance/mask_" + coco.imgs[img_id]["file_name"], mask)
     mask = mask.astype(np.uint8)
-    mask[mask>0] = 255
-    io.imsave("/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_huh7/semantic/mask_"+coco.imgs[img_id]['file_name'], mask)
+    mask[mask > 0] = 255
+    io.imsave(save_path + "semantic/mask_" + coco.imgs[img_id]["file_name"], mask)
 ##############
 # coco = COCO('/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/train_bv2.json')
 # img_dir = '/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/images/livecell_train_val_images/'
@@ -102,7 +116,7 @@ for img_id in coco.imgs:
 
 #     return semantic_mask, instance_mask
 
-  
+
 # json_file_path = '/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/train_bv2.json'
 
 # with open(json_file_path, 'r') as json_file:

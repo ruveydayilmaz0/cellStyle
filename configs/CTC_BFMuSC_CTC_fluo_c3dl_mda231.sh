@@ -24,3 +24,4 @@ output_path: '/work/scratch/yilmaz/transferred_styles/CTC_BFMuSC_zoom0.5_CTC_flu
 without_init_adain: false
 without_attn_injection: false
 fromMask: true
+rgb: false

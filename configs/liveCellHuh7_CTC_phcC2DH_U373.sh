@@ -24,3 +24,4 @@ output_path: '/work/scratch/yilmaz/transferred_styles/liveCellHuh7_zoom3_CTC_phc
 without_init_adain: false
 without_attn_injection: false
 fromMask: false
+rgb: false

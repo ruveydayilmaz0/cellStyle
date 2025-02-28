@@ -1,8 +1,8 @@
 import os, shutil, argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cnt', default = './data/cnt')
-parser.add_argument('--sty', default = './data/sty')
+parser.add_argument("--cnt", default="./data/cnt")
+parser.add_argument("--sty", default="./data/sty")
 opt = parser.parse_args()
 
 # inputs of directory
@@ -10,12 +10,12 @@ a_folder_path = opt.cnt
 b_folder_path = opt.sty
 
 # destination directory of copied inputs
-result_folder_path = a_folder_path + '_eval'    # "./data/cnt_eval"
-result_folder_path_ = b_folder_path + '_eval'   # "./data/sty_eval"
+result_folder_path = a_folder_path + "_eval"  # "./data/cnt_eval"
+result_folder_path_ = b_folder_path + "_eval"  # "./data/sty_eval"
 
 # get images in the directories
-a_images = [f for f in os.listdir(a_folder_path) if f.endswith('.png')]
-b_images = [f for f in os.listdir(b_folder_path) if f.endswith('.png')]
+a_images = [f for f in os.listdir(a_folder_path) if f.endswith(".png")]
+b_images = [f for f in os.listdir(b_folder_path) if f.endswith(".png")]
 
 # if no dst, make directory
 if not os.path.exists(result_folder_path):

@@ -7,8 +7,15 @@ import torch.nn.functional as F
 from torch import nn, Tensor
 
 
-InceptionOutputs = namedtuple("InceptionOutputs", ["logits1",  "logits2", "aux_logits1", "aux_logits2"])
-InceptionOutputs.__annotations__ = {"logits1": Tensor,  "logits2": Tensor, "aux_logits1": Optional[Tensor], "aux_logits2": Optional[Tensor]}
+InceptionOutputs = namedtuple(
+    "InceptionOutputs", ["logits1", "logits2", "aux_logits1", "aux_logits2"]
+)
+InceptionOutputs.__annotations__ = {
+    "logits1": Tensor,
+    "logits2": Tensor,
+    "aux_logits1": Optional[Tensor],
+    "aux_logits2": Optional[Tensor],
+}
 
 # Script annotations failed with _GoogleNetOutputs = namedtuple ...
 # _InceptionOutputs set here for backwards compat
@@ -29,7 +36,15 @@ class Inception3(nn.Module):
         super().__init__()
 
         if inception_blocks is None:
-            inception_blocks = [BasicConv2d, InceptionA, InceptionB, InceptionC, InceptionD, InceptionE, InceptionAux]
+            inception_blocks = [
+                BasicConv2d,
+                InceptionA,
+                InceptionB,
+                InceptionC,
+                InceptionD,
+                InceptionE,
+                InceptionAux,
+            ]
         if init_weights is None:
             init_weights = True
         assert len(inception_blocks) == 7
@@ -73,7 +88,9 @@ class Inception3(nn.Module):
             for m in self.modules():
                 if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
                     stddev = float(m.stddev) if hasattr(m, "stddev") else 0.1  # type: ignore
-                    torch.nn.init.trunc_normal_(m.weight, mean=0.0, std=stddev, a=-2, b=2)
+                    torch.nn.init.trunc_normal_(
+                        m.weight, mean=0.0, std=stddev, a=-2, b=2
+                    )
                 elif isinstance(m, nn.BatchNorm2d):
                     nn.init.constant_(m.weight, 1)
                     nn.init.constant_(m.bias, 0)
@@ -86,7 +103,9 @@ class Inception3(nn.Module):
             x = torch.cat((x_ch0, x_ch1, x_ch2), 1)
         return x
 
-    def _forward(self, x: Tensor, return_features: bool=False) -> Tuple[Tensor, Optional[Tensor]]:
+    def _forward(
+        self, x: Tensor, return_features: bool = False
+    ) -> Tuple[Tensor, Optional[Tensor]]:
         # N x 3 x 299 x 299
         x = self.Conv2d_1a_3x3(x)
         # N x 32 x 149 x 149
@@ -146,13 +165,15 @@ class Inception3(nn.Module):
         return out1, out2, aux1, aux2
 
     @torch.jit.unused
-    def eager_outputs(self, out1: Tensor, out2: Tensor, aux1: Optional[Tensor], aux2: Optional[Tensor]) -> InceptionOutputs:
+    def eager_outputs(
+        self, out1: Tensor, out2: Tensor, aux1: Optional[Tensor], aux2: Optional[Tensor]
+    ) -> InceptionOutputs:
         if self.training and self.aux_logits:
             return InceptionOutputs(out1, out2, aux1, aux2)
         else:
             return out1, out2  # type: ignore[return-value]
 
-    def forward(self, x: Tensor, return_features: bool=False) -> InceptionOutputs:
+    def forward(self, x: Tensor, return_features: bool = False) -> InceptionOutputs:
         x = self._transform_input(x)
         if return_features:
             return self._forward(x, return_features=True)
@@ -168,7 +189,10 @@ class Inception3(nn.Module):
 
 class InceptionA(nn.Module):
     def __init__(
-        self, in_channels: int, pool_features: int, conv_block: Optional[Callable[..., nn.Module]] = None
+        self,
+        in_channels: int,
+        pool_features: int,
+        conv_block: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
         if conv_block is None:
@@ -206,7 +230,9 @@ class InceptionA(nn.Module):
 
 
 class InceptionB(nn.Module):
-    def __init__(self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None) -> None:
+    def __init__(
+        self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
         super().__init__()
         if conv_block is None:
             conv_block = BasicConv2d
@@ -235,7 +261,10 @@ class InceptionB(nn.Module):
 
 class InceptionC(nn.Module):
     def __init__(
-        self, in_channels: int, channels_7x7: int, conv_block: Optional[Callable[..., nn.Module]] = None
+        self,
+        in_channels: int,
+        channels_7x7: int,
+        conv_block: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
         if conv_block is None:
@@ -280,7 +309,9 @@ class InceptionC(nn.Module):
 
 
 class InceptionD(nn.Module):
-    def __init__(self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None) -> None:
+    def __init__(
+        self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
         super().__init__()
         if conv_block is None:
             conv_block = BasicConv2d
@@ -311,7 +342,9 @@ class InceptionD(nn.Module):
 
 
 class InceptionE(nn.Module):
-    def __init__(self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None) -> None:
+    def __init__(
+        self, in_channels: int, conv_block: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
         super().__init__()
         if conv_block is None:
             conv_block = BasicConv2d
@@ -359,7 +392,10 @@ class InceptionE(nn.Module):
 
 class InceptionAux(nn.Module):
     def __init__(
-        self, in_channels: int, num_classes: int, conv_block: Optional[Callable[..., nn.Module]] = None
+        self,
+        in_channels: int,
+        num_classes: int,
+        conv_block: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
         if conv_block is None:
@@ -398,4 +434,3 @@ class BasicConv2d(nn.Module):
         x = self.conv(x)
         x = self.bn(x)
         return F.relu(x, inplace=True)
-

@@ -1,4 +1,4 @@
-cnt: '/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_shsy5y/semantic/'
+cnt: '/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/SHSY5Y_lessCrowded/'
 source_type: 'liveCell'
 cnt_zoom: 0
 masks_path: '/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_shsy5y/instance/'
@@ -19,7 +19,8 @@ model_config: 'models/ldm/stable-diffusion-v1/v1-inference.yaml'
 precomputed: ''
 ckpt: 'models/ldm/stable-diffusion-v1/sd-v1-4.ckpt'
 precision: 'autocast'
-output_path: '/work/scratch/yilmaz/transferred_styles/liveCell_shsy5y_ctcPhcPsc_Zoom0/fromMask/'
+output_path: '/work/scratch/yilmaz/transferred_styles/liveCell_shsy5y_ctcPhcPsc_Zoom0/backRemoved/'
 without_init_adain: false
 without_attn_injection: false
 fromMask: true
+rgb: false

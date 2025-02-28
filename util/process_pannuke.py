@@ -20,7 +20,9 @@ from pathlib import Path
 from PIL import Image
 from tqdm import tqdm
 import argparse
+
 # from cell_segmentation.utils.metrics import remap_label
+
 
 def remap_label(pred, by_size=False):
     """
@@ -54,6 +56,7 @@ def remap_label(pred, by_size=False):
         new_pred[pred == inst_id] = idx + 1
     return new_pred
 
+
 def process_fold(fold, input_path, output_path) -> None:
     fold_path = Path(input_path) / f"fold{fold}"
     output_fold_path = Path(output_path) / f"fold{fold}"
@@ -63,6 +66,7 @@ def process_fold(fold, input_path, output_path) -> None:
 
     print(f"Fold: {fold}")
     print("Loading large numpy files, this may take a while")
+    types = np.load(fold_path / "types.npy")
     images = np.load(fold_path / "images.npy")
     masks = np.load(fold_path / "masks.npy")
 
@@ -105,13 +109,13 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "--input_path",
     type=str,
-    default="/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/PanNuke/fold_1/Fold_1/",
+    default="/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/PanNuke/fold_2/Fold2/images/",
     help="Input path of the original PanNuke dataset",
     # required=True,
 )
 parser.add_argument(
     "--output_path",
-    default="/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/PanNuke/fold_1/Fold_1/prepared",
+    default="/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/PanNuke/fold_2/Fold_2/prepared",
     type=str,
     help="Output path to store the processed PanNuke dataset",
     # required=True,
@@ -124,5 +128,5 @@ if __name__ == "__main__":
     input_path = Path(configuration["input_path"])
     output_path = Path(configuration["output_path"])
 
-    for fold in [1]:# [0, 1, 2]:
+    for fold in [2]:  # [0, 1, 2]:
         process_fold(fold, input_path, output_path)
