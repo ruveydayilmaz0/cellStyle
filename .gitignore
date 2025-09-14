@@ -7,3 +7,10 @@ __pycache__
 /run_*
 /condor
 /try
+cellStyle_original.py
+configs/*
+!configs/config.sh
+std_plots/*
+environment.yaml
+utils/*
+!utils/data_loading.py

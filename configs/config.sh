@@ -1,7 +1,8 @@
-cnt: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2020/Fluo-N2DL-HeLa/01/'
+cnt: 'content_folder'
 source_type: 'CTC' #choices=['liveCell', 'CTC', 'cellIm']
-cnt_zoom: 2.5 #zoom for the content images
-masks_path: '/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2020/Fluo-N2DL-HeLa/01_ST/SEG/' #masks for the content images
+cnt_zoom: 0.0 #zoom for the content images
+masks_path: 'masks_for_content_images'
+sty: 'target_folder'
 ddim_inv_steps: 50
 save_feat_steps: 50
 start_step: 49
@@ -10,15 +11,15 @@ H: 512
 W: 512
 C: 4
 f: 8
-T: 1.1
+T: 1.0
 gamma: 0.75
 attn_layer: '6,7,8,9,10,11'
 model_config: 'models/ldm/stable-diffusion-v1/v1-inference.yaml'
 precomputed: ''
 ckpt: 'models/ldm/stable-diffusion-v1/sd-v1-4.ckpt'
 precision: 'autocast'
-output_path: '/work/scratch/yilmaz/transferred_styles/only_zoom/CTC_n2dl_hela_CTC_n2dh_gowt1/'
+output_path: 'path_to_save_results'
 without_init_adain: false
 without_attn_injection: false
 fromMask: false
-rgb: false
+rgb: true #whether the content images are rgb or grayscale

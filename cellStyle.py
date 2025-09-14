@@ -16,18 +16,9 @@ import torchvision.transforms as transforms
 import time
 import pickle
 from pathlib import Path
+from utils.data_loading import load_img
 
 feat_maps = []
-
-
-def save_img_from_sample(model, samples_ddim, fname):
-    x_samples_ddim = model.decode_first_stage(samples_ddim)
-    x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-    x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
-    x_image_torch = torch.from_numpy(x_samples_ddim).permute(0, 3, 1, 2)
-    x_sample = 255.0 * rearrange(x_image_torch[0].cpu().numpy(), "c h w -> h w c")
-    img = Image.fromarray(x_sample.astype(np.uint8))
-    img.save(fname)
 
 
 def feat_merge(opt, cnt_feats, sty_feats, start_step=0):
@@ -55,169 +46,6 @@ def feat_merge(opt, cnt_feats, sty_feats, start_step=0):
             if ori_key[-1] == "k" or ori_key[-1] == "v":
                 feat_maps[i][ori_key] = sty_feat[ori_key]
     return feat_maps
-
-
-def pad_mask(mask, repeatX, repeatY):
-    """
-    Relabels reflected instances in a segmentation mask after padding
-    to ensure each instance has a unique label.
-
-    Args:
-        mask (torch.Tensor): Instance segmentation mask (H, W) with unique instance IDs.
-        padding (int or tuple): Padding size.
-
-    Returns:
-        torch.Tensor: Mask with unique labels in the padded regions.
-    """
-    sizeX, sizeY = mask.size[0], mask.size[1]
-    if mask.mode == "RGB":
-        rgb = True
-        # big_mask = torch.zeros((sizeX * repeatX, sizeY * repeatY, 3), dtype=torch.int32)
-    else:
-        rgb = False
-    big_mask = torch.zeros((sizeY * repeatY, sizeX * repeatX), dtype=torch.int32)
-    mask = np.array(mask)
-    if rgb:
-        mask = mask[:, :, 0]
-    mask = mask.astype(np.float32)
-    mask = torch.tensor(mask)
-    max_label = torch.max(mask)
-    if rgb:
-        max_label = 0
-    for i in range(repeatX):
-        for j in range(repeatY):
-            # max_label += max_init
-            # if rgb:
-            #     big_mask[i*sizeX:(i+1)*sizeX, j*sizeY:(j+1)*sizeY, :] = mask
-            # else:
-            big_mask[j * sizeY : (j + 1) * sizeY, i * sizeX : (i + 1) * sizeX] = mask
-            mask[mask > 0] = mask[mask > 0] + max_label
-    if rgb:
-        # return transforms.functional.to_pil_image(big_mask.permute(2,0,1), mode="RGB")
-        return transforms.functional.to_pil_image(big_mask, mode="I").convert("RGB")
-    else:
-        return transforms.functional.to_pil_image(big_mask)
-
-
-def tiff_force_8bit(image, **kwargs):
-    if image.format == "TIFF" and image.mode == "I;16":
-        array = np.array(image)
-        normalized = (
-            (array.astype(np.uint16) - array.min())
-            * 255.0
-            / (array.max() - array.min())
-        )
-        # if the cell borders are too dark, make them brighter
-        # normalized[normalized>80] = 80
-        # normalized = 3 * normalized
-        image = Image.fromarray(normalized.astype(np.uint8))
-
-    return image
-
-
-def load_img(
-    path,
-    masks_path="",
-    crop=512,
-    loadMask=False,
-    zoom=0,
-    source="cellIm",
-    fromMask=False,
-):
-
-    mask = None
-    image = Image.open(path)
-    image = tiff_force_8bit(image)
-    image = image.convert("RGB")
-    # Crop differently if the cell sizes should be matched betw the style and source
-    x, y = crop, crop
-    print(f"Loaded input image of size ({x}, {y}) from {path}")
-    # Downsize the U2OS images to match the cell sizes to PhC cells
-    if zoom != 0:
-        image = image.resize(
-            (int(image.size[0] * zoom), int(image.size[1] * zoom)),
-            resample=Image.Resampling.LANCZOS,
-        )
-        # zoom out and pad if the style cells are smaller
-        if zoom < 1:
-            # padding = (crop // 2, crop // 2, crop // 2, crop // 2)
-            # image = transforms.functional.pad(image, padding, padding_mode='reflect')
-            # repeat instead of mirroring
-            image = pad_mask(
-                image, crop // image.size[0] + 1, crop // image.size[1] + 1
-            )
-    i, j, _, _ = transforms.RandomCrop(size=(crop, crop), padding=None).get_params(
-        image, output_size=(crop, crop)
-    )
-    image = transforms.functional.crop(image, i, j, crop, crop)
-    if loadMask:
-        if source == "cellIm":
-            # masks_path = "/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/cell_im_lib_MP6843/MP6843_segInstance/"
-            mask_pt = masks_path + path.split("/")[-1][:-6] + "_GT_01.tif"
-            mask = Image.open(mask_pt)
-            # In the MP6843 dataset, masks are half the size of images, reverse this first
-            mask = mask.resize(
-                (mask.size[0] * 2, mask.size[1] * 2), resample=Image.Resampling.NEAREST
-            )
-            if zoom != 0:
-                mask = mask.resize(
-                    (int(mask.size[0] * zoom), int(mask.size[1] * zoom)),
-                    resample=Image.Resampling.NEAREST,
-                )
-                if zoom < 1:
-                    # mask = transforms.functional.pad(mask, padding, padding_mode='constant', fill=0)
-                    mask = pad_mask(
-                        mask, crop // mask.size[0] + 1, crop // mask.size[1] + 1
-                    )
-            mask = transforms.functional.crop(mask, i, j, crop, crop)
-            # mask = mask.resize((reshape, reshape), resample=Image.Resampling.NEAREST)
-        elif source == "liveCell":
-            # masks_path = "/netshares/BiomedicalImageAnalysis/Resources/dataset_collection/livecell/GTmasks_shsy5y/instance/"
-            if fromMask:
-                mask_pt = masks_path + path.split("/")[-1]
-            else:
-                mask_pt = masks_path + "mask_" + path.split("/")[-1]
-            # some masks are missing in this dataset if so, return
-            try:
-                mask = Image.open(mask_pt)
-            except:
-                return None, None, True
-            if zoom != 0:
-                mask = mask.resize(
-                    (int(mask.size[0] * zoom), int(mask.size[1] * zoom)),
-                    resample=Image.Resampling.NEAREST,
-                )
-                if zoom < 1:
-                    # mask = transforms.functional.pad(mask, padding, padding_mode='constant', fill=0)
-                    mask = pad_mask(
-                        mask, crop // mask.size[0] + 1, crop // mask.size[1] + 1
-                    )
-            mask = transforms.functional.crop(mask, i, j, crop, crop)
-        elif source == "CTC":
-            # masks_path = "/netshares/BiomedicalImageAnalysis/Resources/CellTrackingChallenge_UlmanNMeth/2020/PhC-C2DL-PSC/01_ST/SEG/"
-            if fromMask:
-                mask_pt = path
-            else:
-                mask_pt = masks_path + "man_seg" + path.split("/")[-1][1:]
-            mask = Image.open(mask_pt)
-            if zoom != 0:
-                mask = mask.resize(
-                    (int(mask.size[0] * zoom), int(mask.size[1] * zoom)),
-                    resample=Image.Resampling.NEAREST,
-                )
-                if zoom < 1:
-                    # mask = transforms.functional.pad(mask, padding, padding_mode='constant', fill=0)
-                    mask = pad_mask(
-                        mask, crop // mask.size[0] + 1, crop // mask.size[1] + 1
-                    )
-            mask = transforms.functional.crop(mask, i, j, crop, crop)
-        # Skip the content images that have no cells
-        if np.all(np.array(mask) == 0):
-            return None, None, True
-    image = np.array(image).astype(np.float32) / 255.0
-    image = image[None].transpose(0, 3, 1, 2)
-    image = torch.from_numpy(image)
-    return 2.0 * image - 1.0, mask, False
 
 
 def adain(cnt_feat, sty_feat):
@@ -252,7 +80,10 @@ def load_model_from_config(config, ckpt, verbose=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config", type=str, default="configs/try.sh", help="path to the config file"
+        "--config",
+        type=str,
+        default="configs/config.sh",
+        help="path to the config file",
     )
     args = parser.parse_args()
 
@@ -327,10 +158,8 @@ def main():
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
     uc = model.get_learned_conditioning([""])
     shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
-    sty_img_list = sorted(
-        os.listdir(opt.sty)
-    )  # [1100:]#for musc only, dont look at the initial files which are almost empty
-    cnt_img_list = sorted(os.listdir(opt.cnt))  # [91:]#[1100:]
+    sty_img_list = sorted(os.listdir(opt.sty))
+    cnt_img_list = sorted(os.listdir(opt.cnt))
     cnt_img_list = [file for file in cnt_img_list if "w2" not in file]
 
     # count for img name
@@ -488,7 +317,7 @@ def main():
                             if m >= 4000:
                                 break
             else:
-                continue  # Only runs if inner loop didn’t break
+                continue
             break
 
     print(f"Total end: {time.time() - begin}")
