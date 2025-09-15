@@ -12,7 +12,6 @@ from contextlib import nullcontext
 import copy
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
-import torchvision.transforms as transforms
 import time
 import pickle
 from pathlib import Path
@@ -80,10 +79,7 @@ def load_model_from_config(config, ckpt, verbose=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--config",
-        type=str,
-        default="configs/config.sh",
-        help="path to the config file",
+        "--config", type=str, default="configs/config.sh", help="path to the config file"
     )
     args = parser.parse_args()
 
@@ -158,7 +154,9 @@ def main():
     precision_scope = autocast if opt.precision == "autocast" else nullcontext
     uc = model.get_learned_conditioning([""])
     shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
-    sty_img_list = sorted(os.listdir(opt.sty))
+    sty_img_list = sorted(
+        os.listdir(opt.sty)
+    )
     cnt_img_list = sorted(os.listdir(opt.cnt))
     cnt_img_list = [file for file in cnt_img_list if "w2" not in file]
 
